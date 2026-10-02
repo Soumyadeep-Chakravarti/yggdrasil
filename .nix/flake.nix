@@ -1,49 +1,61 @@
 {
-  description = "Norns development environment";
+  description = "Yggdrasil development environment";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+    flake-utils.url = "github:numtide/flake-utils";
   };
 
   outputs =
-    { nixpkgs, ... }:
-    let
-      systems = [
-        "x86_64-linux"
-        "aarch64-linux"
-      ];
-
-      forAllSystems = nixpkgs.lib.genAttrs systems;
-    in
     {
-      devShells = forAllSystems (
-        system:
-        let
-          pkgs = nixpkgs.legacyPackages.${system};
-        in
-        {
-          default = pkgs.mkShell {
-            packages = with pkgs; [
-              rustc
-              cargo
-              rustfmt
-              clippy
-              rust-analyzer
+      self,
+      nixpkgs,
+      flake-utils,
+    }:
+    flake-utils.lib.eachDefaultSystem (
+      system:
+      let
+        pkgs = import nixpkgs {
+          inherit system;
+        };
+      in
+      {
+        devShells.default = pkgs.mkShell {
+          packages = with pkgs; [
+            # Rust
+            rustc
+            cargo
+            rustfmt
+            clippy
+            rust-analyzer
 
-              pkg-config
-              openssl
+            # Python
+            uv
 
-              just
-            ];
+            # C / C++
+            clang
+            clang-tools
 
-            RUST_BACKTRACE = "1";
+            # Shell
+            shellcheck
+            shfmt
 
-            shellHook = ''
-              echo "ᚾ Norns"
-              echo "  $(rustc --version)"
-            '';
-          };
-        }
-      );
-    };
+            # Nix
+            nixfmt
+
+            # General development
+            pkg-config
+            openssl
+            just
+          ];
+
+          RUST_BACKTRACE = "1";
+
+          shellHook = ''
+            echo "ᚾ Yggdrasil"
+          '';
+        };
+        formatter = pkgs.nixfmt;
+      }
+    );
 }
